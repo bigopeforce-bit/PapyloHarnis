@@ -66,4 +66,17 @@ class WebResourceExtractorTest {
         val plainMsg = "No links or html files here."
         assertNull(WebResourceExtractor.findPrimaryPreviewTarget(plainMsg))
     }
+
+    @Test
+    fun `findPrimaryPreviewTarget accepts explicit workspace HTML directive`() {
+        val msg = """
+            Built a self-contained page.
+            ::web-preview{target="index.html"}
+        """.trimIndent()
+
+        val target = WebResourceExtractor.findPrimaryPreviewTarget(msg)
+        assertNotNull(target)
+        assertEquals(WebTargetType.WORKSPACE_HTML, target?.type)
+        assertEquals("index.html", target?.urlOrPath)
+    }
 }

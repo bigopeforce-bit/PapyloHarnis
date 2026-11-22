@@ -114,13 +114,14 @@ object WebResourceExtractor {
         }
 
     /**
-     * Determine if a message has previewable web targets (only live localhost servers).
-     * Raw HTML files and external non-localhost URLs are ignored so only real local servers get the button.
+     * Determine if a message has a previewable web target: a live localhost server
+     * or a workspace HTML file (which O2OAgent renders directly, with no server).
+     * External URLs are ignored so only real local targets get the button.
      */
     fun findPrimaryPreviewTarget(text: String): WebPreviewTarget? {
-        // 0. Explicit agent directive if pointing to localhost
+        // 0. Explicit agent directive: live localhost server or workspace HTML file
         val explicit = extractExplicitDirective(text)
-        if (explicit != null && explicit.type == WebTargetType.LOCAL_SERVER) return explicit
+        if (explicit != null && explicit.type in setOf(WebTargetType.LOCAL_SERVER, WebTargetType.WORKSPACE_HTML)) return explicit
 
         val urls = extractUrls(text)
         val localhost = urls.firstOrNull { LocalPortProbe.isLocalhostUrl(it) }

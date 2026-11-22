@@ -322,8 +322,9 @@ private fun ChatScreenContent(
                 state.runningCalls.any { running -> running.id == it.id }, browserTargets[it.id], state.pendingApproval?.call?.id == it.id)
         }
     }
-    // O2OAgent: when a completed answer contains an explicit live web-preview
-    // directive (a running localhost server), open the preview automatically.
+    // O2OAgent: when a completed answer contains an explicit preview directive,
+    // open it automatically. A localhost target is only opened once its port is
+    // actually listening; workspace HTML previews need no server at all.
     // Track the last target so recomposition or revisiting does not reopen it.
     var lastAutoPreviewTarget by remember(state.sessionId) { mutableStateOf<String?>(null) }
     val lastAssistantAnswer = remember(state.messages) {
@@ -332,9 +333,14 @@ private fun ChatScreenContent(
     LaunchedEffect(state.sessionId, lastAssistantAnswer, state.busy, state.streamingText) {
         if (state.busy || state.streamingText != null || lastAssistantAnswer.isBlank()) return@LaunchedEffect
         val target = com.androidharness.app.core.WebResourceExtractor.extractExplicitDirective(lastAssistantAnswer)
-            ?.takeIf { it.isLive } ?: return@LaunchedEffect
-        if (target.urlOrPath == lastAutoPreviewTarget) return@LaunchedEffect
-        lastAutoPreviewTarget = target.urlOrPath
+            ?: return@LaunchedEffect
+        val supported = target.type == com.androidharness.app.core.WebTargetType.WORKSPACE_HTML ||
+            (target.type == com.androidharness.app.core.WebTargetType.LOCAL_SERVER &&
+                com.androidharness.app.core.LocalPortProbe.isUrlLive(target.urlOrPath))
+        if (!supported) return@LaunchedEffect
+        val key = target.type.name + ":" + target.urlOrPath
+        if (key == lastAutoPreviewTarget) return@LaunchedEffect
+        lastAutoPreviewTarget = key
         webPreviewUrl = target.urlOrPath
         showWebPreview = true
     }

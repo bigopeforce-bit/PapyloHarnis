@@ -190,7 +190,8 @@ internal fun AssistantText(
     var targetLive by remember(text, streaming) { mutableStateOf<Boolean?>(null) }
     if (showPreviewChip && primaryTarget != null && onOpenUrl != null) {
         LaunchedEffect(text) {
-            targetLive = LocalPortProbe.isUrlLive(primaryTarget.urlOrPath)
+            targetLive = primaryTarget.type == com.androidharness.app.core.WebTargetType.WORKSPACE_HTML ||
+                LocalPortProbe.isUrlLive(primaryTarget.urlOrPath)
         }
     }
 

@@ -1455,7 +1455,7 @@ class AgentEngine(
 
         // Only offer setup after Android actually reported a missing tool. The
         // command may already have changed files, so never replay it here.
-        if (call.name == "shell" && !executed.ok && !linuxWasReady &&
+        if (call.name in setOf("shell", "shell_background") && !executed.ok && !linuxWasReady &&
             workspace !is com.androidharness.app.workspace.SshFs
         ) {
             val hint = missingAndroidToolchain(executed.output)
@@ -1482,7 +1482,7 @@ class AgentEngine(
         // in chat instead of letting the model retry blindly. The presence
         // check keeps project-level failures ("vite: not found") out: those
         // are not fixable by reinstalling the toolchain.
-        if (call.name == "shell" && !executed.ok && workspace !is com.androidharness.app.workspace.SshFs &&
+        if (call.name in setOf("shell", "shell_background") && !executed.ok && workspace !is com.androidharness.app.workspace.SshFs &&
             linuxWasReady && linuxEnv.isReady && linuxEnv.state.value !is com.androidharness.app.data.env.EnvState.Failed
         ) {
             val missingTool = detectMissingHeadlineTool(executed.output)
@@ -2204,8 +2204,8 @@ ${if (appSettings.subagentsEnabled) "- For broad exploration whose raw output wo
         sb.append("- Link relevant source files so the user can open them in the editor: [MainActivity.kt](app/src/main/MainActivity.kt#L42). Use the exact workspace-relative or workspace-qualified path returned by tools, and a verified one-based line when available; omit the line if unknown. Inline `path/to/file.kt:42` references also open in the editor. For spaces or parentheses in a Markdown destination, wrap the destination in angle brackets. Never invent paths or line numbers.\n")
         sb.append("- If a deterministic tool call fails, inspect the current state and change the inputs before retrying. Do not repeat the same failing call unchanged. Edit failures should trigger a fresh read of the affected file.\n")
         sb.append("- Never invent file contents you have not read.\n")
-        sb.append("- Browser automation: when previewing or interacting with web projects via browser tools, start a local dev/http server using shell_background (e.g. python3 -m http.server 8000, npm run dev, or similar) and navigate to http://localhost:<port>.\n")
-        sb.append("- Mobile UI formatting: responses are displayed on a phone touchscreen. Format text cleanly and compactly. Prefer readable paragraphs and concise lists. Apply the shared table and chart selection rules to Markdown as well as rich components. Keep rich cards, choices, steps, and details when useful; do not turn routine explanations or status reports into table rows. Avoid wide ASCII terminal boxes. When creating, editing, or serving HTML/web projects, host them on localhost via shell_background and ALWAYS include an explicit preview directive `::web-preview{target=\"http://localhost:<port>\"}` on its own line in your final answer, using the real running port. O2OAgent detects this directive and opens the live preview automatically in the app, so never omit it and never invent a port.\n")
+        sb.append("- Browser automation: before starting a local dev/http server, check the runtime with env_status. When python3/node are unavailable or the Linux environment is not installed, do NOT try to start a localhost server; write a self-contained HTML file in the workspace and use the workspace preview directive described below. If a runtime is available, start the server with shell_background (e.g. python3 -m http.server 8000, npm run dev) and navigate to http://localhost:<port>.\n")
+        sb.append("- Mobile UI formatting: responses are displayed on a phone touchscreen. Format text cleanly and compactly. Prefer readable paragraphs and concise lists. Apply the shared table and chart selection rules to Markdown as well as rich components. Keep rich cards, choices, steps, and details when useful; do not turn routine explanations or status reports into table rows. Avoid wide ASCII terminal boxes. For web work, O2OAgent opens a preview automatically when your final answer contains an explicit directive on its own line. Prefer a self-contained workspace HTML file with `::web-preview{target=\"index.html\"}` — O2OAgent renders workspace HTML directly, with no server and no Python/Node required. If a real local server is running, use `::web-preview{target=\"http://localhost:<port>\"}` with the actual listening port. Never emit a localhost directive for a server that failed to start or is not listening, and never invent a port.\n")
 
         if (mode == AgentMode.PLAN) {
             sb.append(
