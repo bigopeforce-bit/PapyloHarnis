@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"Opsyonal: pinananatiling buhay ang matagal sa mga agresibong OEM"</string>
     <string name="ui_ready_to_begin">"Handa nang magsimula"</string>
     <string name="ui_allow_storage_access_to_begin">"Payagan ang pag-access sa storage na magsimula"</string>
-    <string name="ui_start_harness">"Simulan ang harness"</string>
+    <string name="ui_start_harness">Simulan ang O2OAgent</string>
     <string name="ui_optional">"Opsyonal"</string>
     <string name="ui_model_activity_and_ai_code_changes">"Aktibidad ng modelo at mga pagbabago sa AI code"</string>
     <string name="ui_model_activity">"MODELONG GAWAIN"</string>

@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"वैकल्पिक: आक्रामक ओईएम पर लंबे समय तक चलने को जीवित रखता है"</string>
     <string name="ui_ready_to_begin">"शुरू करने के लिए तैयार"</string>
     <string name="ui_allow_storage_access_to_begin">"भंडारण पहुंच प्रारंभ करने की अनुमति दें"</string>
-    <string name="ui_start_harness">"दोहन शुरू करो"</string>
+    <string name="ui_start_harness">O2OAgent शुरू करें</string>
     <string name="ui_optional">"वैकल्पिक"</string>
     <string name="ui_model_activity_and_ai_code_changes">"मॉडल गतिविधि और एआई कोड में परिवर्तन"</string>
     <string name="ui_model_activity">"मॉडल गतिविधि"</string>

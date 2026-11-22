@@ -1265,7 +1265,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"可選：避免嚴格的廠商後臺限制終止長時間任務"</string>
     <string name="ui_ready_to_begin">"準備就緒"</string>
     <string name="ui_allow_storage_access_to_begin">"允許儲存訪問以開始"</string>
-    <string name="ui_start_harness">"啟動 O2OAgent"</string>
+    <string name="ui_start_harness">啟動 O2OAgent</string>
     <string name="ui_optional">"可選"</string>
     <string name="ui_model_activity_and_ai_code_changes">"模型活動和 AI 程式碼更改"</string>
     <string name="ui_model_activity">"模型活動"</string>

@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"선택 사항: 공격적인 OEM에 대해 장기적으로 실행 가능"</string>
     <string name="ui_ready_to_begin">"시작할 준비가 되었습니다"</string>
     <string name="ui_allow_storage_access_to_begin">"저장소 액세스가 시작되도록 허용"</string>
-    <string name="ui_start_harness">"하네스 시작"</string>
+    <string name="ui_start_harness">O2OAgent 시작</string>
     <string name="ui_optional">"선택사항"</string>
     <string name="ui_model_activity_and_ai_code_changes">"모델 활동 및 AI 코드 변경"</string>
     <string name="ui_model_activity">"모델 활동"</string>

@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"விருப்பத்தேர்வு: ஆக்கிரமிப்பு OEMகளில் நீண்ட ரன்களை உயிர்ப்புடன் வைத்திருக்கும்"</string>
     <string name="ui_ready_to_begin">"தொடங்கத் தயார்"</string>
     <string name="ui_allow_storage_access_to_begin">"சேமிப்பக அணுகலைத் தொடங்க அனுமதிக்கவும்"</string>
-    <string name="ui_start_harness">"சேணம் தொடங்கவும்"</string>
+    <string name="ui_start_harness">O2OAgent தொடங்கவும்</string>
     <string name="ui_optional">"விருப்பமானது"</string>
     <string name="ui_model_activity_and_ai_code_changes">"மாதிரி செயல்பாடு மற்றும் AI குறியீடு மாற்றங்கள்"</string>
     <string name="ui_model_activity">"மாதிரி செயல்பாடு"</string>

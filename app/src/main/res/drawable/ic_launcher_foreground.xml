@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- O2OAgent mark: two interlocking O rings (online + offline) joined by a bridge. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- chevron ">" -->
+    <!-- Left "O" (online) -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M32,34 L48,34 L68,54 L48,74 L32,74 L52,54 Z" />
-    <!-- underscore "_" -->
+        android:pathData="M23,54 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"
+        android:strokeColor="#22D3EE"
+        android:strokeWidth="6"
+        android:fillColor="@android:color/transparent" />
+    <!-- Right "O" (offline) -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M58,66 L82,66 L82,74 L58,74 Z" />
+        android:pathData="M53,54 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"
+        android:strokeColor="#6366F1"
+        android:strokeWidth="6"
+        android:fillColor="@android:color/transparent" />
+    <!-- Bridge between the two O's -->
+    <path
+        android:pathData="M49,54 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"
+        android:fillColor="#FFFFFFFF" />
 </vector>

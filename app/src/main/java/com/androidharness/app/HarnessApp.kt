@@ -46,6 +46,7 @@ class HarnessApp : Application() {
         WebView.enableSlowWholeDocumentDraw()
         container = AppContainer(this)
         memoryScope.launch { container.settings.ensureRumbleCombo() }
+        memoryScope.launch { container.settings.migrateAutomaticAgentDefaults() }
     }
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

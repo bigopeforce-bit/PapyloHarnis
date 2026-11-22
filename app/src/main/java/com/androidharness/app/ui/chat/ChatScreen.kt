@@ -322,6 +322,22 @@ private fun ChatScreenContent(
                 state.runningCalls.any { running -> running.id == it.id }, browserTargets[it.id], state.pendingApproval?.call?.id == it.id)
         }
     }
+    // O2OAgent: when a completed answer contains an explicit live web-preview
+    // directive (a running localhost server), open the preview automatically.
+    // Track the last target so recomposition or revisiting does not reopen it.
+    var lastAutoPreviewTarget by remember(state.sessionId) { mutableStateOf<String?>(null) }
+    val lastAssistantAnswer = remember(state.messages) {
+        state.messages.asReversed().firstOrNull { it.role == Role.ASSISTANT && it.toolCallId == null }?.text.orEmpty()
+    }
+    LaunchedEffect(state.sessionId, lastAssistantAnswer, state.busy, state.streamingText) {
+        if (state.busy || state.streamingText != null || lastAssistantAnswer.isBlank()) return@LaunchedEffect
+        val target = com.androidharness.app.core.WebResourceExtractor.extractExplicitDirective(lastAssistantAnswer)
+            ?.takeIf { it.isLive } ?: return@LaunchedEffect
+        if (target.urlOrPath == lastAutoPreviewTarget) return@LaunchedEffect
+        lastAutoPreviewTarget = target.urlOrPath
+        webPreviewUrl = target.urlOrPath
+        showWebPreview = true
+    }
     var slashExpanded by remember { mutableStateOf(false) }
     // The composer carries its own selection so programmatic edits (mention
     // picks, share prefills) move the cursor instead of leaving it where the

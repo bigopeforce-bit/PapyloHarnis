@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"اختیاری: اجرای طولانی مدت را در OEM های تهاجمی زنده نگه می دارد"</string>
     <string name="ui_ready_to_begin">"آماده برای شروع"</string>
     <string name="ui_allow_storage_access_to_begin">"اجازه دهید دسترسی به فضای ذخیره‌سازی شروع شود"</string>
-    <string name="ui_start_harness">"مهار را شروع کنید"</string>
+    <string name="ui_start_harness">شروع O2OAgent</string>
     <string name="ui_optional">"اختیاری"</string>
     <string name="ui_model_activity_and_ai_code_changes">"فعالیت مدل و کد هوش مصنوعی تغییر می کند"</string>
     <string name="ui_model_activity">"فعالیت مدل"</string>

@@ -24,7 +24,7 @@ enum class ProgressBarStyle { FLAT, SQUIGGLY }
 
 @kotlinx.serialization.Serializable
 data class AppSettings(
-    val permissionMode: PermissionMode = PermissionMode.CONFIRM_RISKY,
+    val permissionMode: PermissionMode = PermissionMode.FULL_AUTO,
     val subagentFullAccess: Boolean = false,
     val backgroundSubagents: Boolean = false,
     val subagentCompletionNotifications: Boolean = true,
@@ -248,6 +248,7 @@ class SettingsRepository(private val context: Context) {
 
     private object Keys {
         val PERMISSION_MODE = stringPreferencesKey("permission_mode")
+        val AUTO_BEHAVIOR_MIGRATED = booleanPreferencesKey("o2o_auto_behavior_migrated")
         val SUBAGENT_FULL_ACCESS = booleanPreferencesKey("subagent_full_access")
         val BACKGROUND_SUBAGENTS = booleanPreferencesKey("background_subagents")
         val SUBAGENT_COMPLETION_NOTIFICATIONS = booleanPreferencesKey("subagent_completion_notifications")
@@ -375,7 +376,7 @@ class SettingsRepository(private val context: Context) {
         AppSettings(
             permissionMode = prefs[Keys.PERMISSION_MODE]
                 ?.let { runCatching { PermissionMode.valueOf(it) }.getOrNull() }
-                ?: PermissionMode.CONFIRM_RISKY,
+                ?: PermissionMode.FULL_AUTO,
             subagentFullAccess = prefs[Keys.SUBAGENT_FULL_ACCESS] ?: false,
             backgroundSubagents = prefs[Keys.BACKGROUND_SUBAGENTS] ?: false,
             subagentCompletionNotifications = prefs[Keys.SUBAGENT_COMPLETION_NOTIFICATIONS] ?: true,
@@ -623,6 +624,21 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setPermissionMode(mode: PermissionMode) {
         context.settingsStore.edit { it[Keys.PERMISSION_MODE] = mode.name }
+    }
+
+    /**
+     * One-time upgrade to O2OAgent's automatic agent defaults. Only replaces the
+     * old CONFIRM_RISKY default; an explicit choice (CONFIRM_ALL, FULL_ACCESS or
+     * FULL_AUTO) is always preserved.
+     */
+    suspend fun migrateAutomaticAgentDefaults() {
+        context.settingsStore.edit { prefs ->
+            if (prefs[Keys.AUTO_BEHAVIOR_MIGRATED] == true) return@edit
+            prefs[Keys.AUTO_BEHAVIOR_MIGRATED] = true
+            if (prefs[Keys.PERMISSION_MODE] == PermissionMode.CONFIRM_RISKY.name) {
+                prefs[Keys.PERMISSION_MODE] = PermissionMode.FULL_AUTO.name
+            }
+        }
     }
 
     suspend fun setSubagentFullAccess(enabled: Boolean) {
