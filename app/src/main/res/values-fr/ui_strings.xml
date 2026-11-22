@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"Facultatif : permet de maintenir de longues séries en vie sur les constructeurs OEM agressifs"</string>
     <string name="ui_ready_to_begin">"Prêt à commencer"</string>
     <string name="ui_allow_storage_access_to_begin">"Autoriser l\'accès au stockage pour commencer"</string>
-    <string name="ui_start_harness">Démarrer O2OAgent</string>
+    <string name="ui_start_harness">"Démarrer O2OAgent"</string>
     <string name="ui_optional">"Facultatif"</string>
     <string name="ui_model_activity_and_ai_code_changes">"Activité du modèle et modifications du code de l\'IA"</string>
     <string name="ui_model_activity">"ACTIVITÉ DU MODÈLE"</string>

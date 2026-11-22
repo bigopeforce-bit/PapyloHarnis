@@ -41,7 +41,7 @@ for loc, value in START_LABELS.items():
     with open(path, encoding="utf-8") as f:
         text = f.read()
     pattern = re.compile(r'(<string name="ui_start_harness">).*?(</string>)', re.S)
-    new, n = pattern.subn(lambda m: m.group(1) + value + m.group(2), text, count=1)
+    new, n = pattern.subn(lambda m: m.group(1) + '"' + value + '"' + m.group(2), text, count=1)
     if n == 1 and new != text:
         with open(path, "w", encoding="utf-8") as f:
             f.write(new)

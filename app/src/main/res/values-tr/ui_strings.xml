@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"İsteğe bağlı: agresif OEM\'lerde uzun tirajları canlı tutar"</string>
     <string name="ui_ready_to_begin">"Başlamaya hazır"</string>
     <string name="ui_allow_storage_access_to_begin">"Depolama erişiminin başlamasına izin ver"</string>
-    <string name="ui_start_harness">O2OAgent'i başlat</string>
+    <string name="ui_start_harness">"O2OAgent'i başlat"</string>
     <string name="ui_optional">"İsteğe bağlı"</string>
     <string name="ui_model_activity_and_ai_code_changes">"Model etkinliği ve AI kodu değişiklikleri"</string>
     <string name="ui_model_activity">"MODEL AKTİVİTE"</string>

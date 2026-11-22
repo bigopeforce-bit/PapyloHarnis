@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"Pilihan: mengekalkan jangka masa panjang pada OEM yang agresif"</string>
     <string name="ui_ready_to_begin">"Bersedia untuk bermula"</string>
     <string name="ui_allow_storage_access_to_begin">"Benarkan akses storan bermula"</string>
-    <string name="ui_start_harness">Mulakan O2OAgent</string>
+    <string name="ui_start_harness">"Mulakan O2OAgent"</string>
     <string name="ui_optional">"Pilihan"</string>
     <string name="ui_model_activity_and_ai_code_changes">"Aktiviti model dan perubahan kod AI"</string>
     <string name="ui_model_activity">"AKTIVITI MODEL"</string>

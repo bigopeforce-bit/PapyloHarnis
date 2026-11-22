@@ -1267,7 +1267,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"ঐচ্ছিক: আক্রমনাত্মক OEM এ দীর্ঘ রান জীবিত রাখে"</string>
     <string name="ui_ready_to_begin">"শুরু করার জন্য প্রস্তুত"</string>
     <string name="ui_allow_storage_access_to_begin">"স্টোরেজ অ্যাক্সেস শুরু করার অনুমতি দিন"</string>
-    <string name="ui_start_harness">O2OAgent শুরু</string>
+    <string name="ui_start_harness">"O2OAgent শুরু"</string>
     <string name="ui_optional">"ঐচ্ছিক"</string>
     <string name="ui_model_activity_and_ai_code_changes">"মডেল কার্যকলাপ এবং AI কোড পরিবর্তন"</string>
     <string name="ui_model_activity">"মডেল কার্যকলাপ"</string>

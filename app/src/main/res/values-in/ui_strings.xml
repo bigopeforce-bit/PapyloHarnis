@@ -1265,7 +1265,7 @@
     <string name="ui_optional_keeps_long_runs_alive_on_aggressive">"Opsional: menjaga eksekusi panjang di perangkat dengan pembatasan ketat"</string>
     <string name="ui_ready_to_begin">"Siap memulai"</string>
     <string name="ui_allow_storage_access_to_begin">"Izinkan akses penyimpanan untuk memulai"</string>
-    <string name="ui_start_harness">Mulai O2OAgent</string>
+    <string name="ui_start_harness">"Mulai O2OAgent"</string>
     <string name="ui_optional">"Opsional"</string>
     <string name="ui_model_activity_and_ai_code_changes">"Aktivitas model dan perubahan kode AI"</string>
     <string name="ui_model_activity">"AKTIVITAS MODEL"</string>
