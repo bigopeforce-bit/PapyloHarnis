@@ -108,7 +108,10 @@ class UpdateManager(
                 val release = fetchLatest()
                 _step.value = when {
                     release == null -> if (manual) Step.Error("No published release with a compatible APK found.") else Step.Idle
-                    isNewer(releaseVersion(release.tag, release.name), current) -> Step.Available(release)
+                    // Only an explicit tap in Settings may surface the upstream
+                    // release dialog. Automatic checks must never interrupt the
+                    // user with a prompt from the original AndroidHarness repo.
+                    isNewer(releaseVersion(release.tag, release.name), current) -> if (manual) Step.Available(release) else Step.Idle
                     manual -> Step.UpToDate(current)
                     else -> Step.Idle
                 }

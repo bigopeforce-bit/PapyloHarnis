@@ -47,8 +47,6 @@ import com.androidharness.app.ui.common.RefreshRate
 import com.androidharness.app.ui.theme.HarnessTheme
 import com.androidharness.app.ui.update.UpdateDialog
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -74,12 +72,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         container = (application as HarnessApp).container
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                kotlinx.coroutines.delay(2_000)
-                container.updates.checkOnForeground()
-            }
-        }
+        // O2OAgent does not check the upstream AndroidHarness releases on its
+        // own: this fork's version scheme is independent, so that check would
+        // pop the "AndroidHarness 4.0 is here" update dialog on every launch.
+        // The manual "Check for updates" button in Settings still works.
 
         lifecycleScope.launch {
             if (container.settings.settings.first().notificationsEnabled && Build.VERSION.SDK_INT >= 33 &&
