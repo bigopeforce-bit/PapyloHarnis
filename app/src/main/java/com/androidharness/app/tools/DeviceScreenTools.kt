@@ -16,7 +16,7 @@ import java.util.UUID
 
 private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"
 
-internal data class DeviceCommandResult(
+data class DeviceCommandResult(
     val output: String,
     val tier: com.androidharness.app.data.env.ExecutionTier,
 ) {
@@ -36,7 +36,7 @@ internal data class DeviceCommandResult(
  * so the generic ShellPolicy path-containment rules (which target user-typed
  * workspace commands and reject /sdcard) do not apply to these fixed commands.
  */
-internal class DeviceShell(private val router: ShellTierRouter) {
+class DeviceShell(private val router: ShellTierRouter) {
     suspend fun run(command: String, timeoutMs: Int = 20_000, maxOutput: Int = 120_000): DeviceCommandResult =
         withContext(Dispatchers.IO) {
             val result = router.run(command, File("/"), timeoutMs, maxOutput)
@@ -88,8 +88,9 @@ class DeviceScreenTool(
         )
         val result = shell.run(command, timeoutMs = 30_000, maxOutput = 400_000)
         val listing = ScreenXmlParser.parse(result.output, maxNodes)
-        return if (args["include_screenshot"]?.jsonPrimitive?.booleanOrNull == true && imageStore != null) {
-            val shot = runCatching { captureScreenshot(context, imageStore, shell) }.getOrNull()
+        val store = imageStore
+        return if (args["include_screenshot"]?.jsonPrimitive?.booleanOrNull == true && store != null) {
+            val shot = runCatching { captureScreenshot(context, store, shell) }.getOrNull()
             val note = if (shot == null) "\n[screenshot unavailable: grant Storage access or check the privileged shell]" else ""
             ToolResult(true, listing + note, image = shot, execution = listOf(result.receipt))
         } else {

@@ -4,7 +4,6 @@ import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.ByteArrayInputStream
-import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 
 /** One node of an Android `uiautomator dump` hierarchy, flattened for the model. */
@@ -36,7 +35,7 @@ internal data class ScreenNode(
  */
 internal object ScreenXmlParser {
 
-    private val BOUNDS = Regex("\\[(-?\\d+),(-?\\d+)\\]\[(-?\\d+),(-?\\d+)\\]")
+    private val BOUNDS = Regex("""\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]""")
 
     fun parse(xml: String, maxNodes: Int = 300): String {
         // `uiautomator dump /dev/tty` can prefix a chatty status line before the XML.
@@ -51,8 +50,6 @@ internal object ScreenXmlParser {
                 runCatching { setFeature("http://apache.org/xml/features/disallow-doctype-decl", true) }
                 runCatching { setFeature("http://xml.org/sax/features/external-general-entities", false) }
                 runCatching { setFeature("http://xml.org/sax/features/external-parameter-entities", false) }
-                runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "") }
-                runCatching { setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "") }
                 isNamespaceAware = false
             }
             factory.newDocumentBuilder().parse(ByteArrayInputStream(clean.toByteArray(Charsets.UTF_8)))

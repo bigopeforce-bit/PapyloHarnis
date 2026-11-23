@@ -12,7 +12,7 @@ class ScreenXmlParserTest {
             <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
             <hierarchy rotation="0">
               <node index="0" text="" resource-id="" class="android.widget.FrameLayout" package="com.example" content-desc="" clickable="false" enabled="true" bounds="[0,0][1080,2400]">
-                <node index="0" text="Send" resource-id="com.example:id/send" class="android.widget.Button" package="com.example" content-desc="Send message" clickable="true" long-clickable="true" enabled="true" scrollable="false" checked="false" focused="true" bounds="[400,280][680,320]" />
+                <node index="0" text="" resource-id="com.example:id/send" class="android.widget.Button" package="com.example" content-desc="Send message" clickable="true" long-clickable="true" enabled="true" scrollable="false" checked="false" focused="true" bounds="[400,280][680,320]" />
               </node>
             </hierarchy>
         """.trimIndent()
@@ -24,7 +24,7 @@ class ScreenXmlParserTest {
         assertTrue(out.contains("id=send"))
         assertTrue(out.contains("@540,300"))
         assertTrue(out.contains("{click,longclick,focused}"))
-        assertTrue(out.contains("[1] Button"))
+        assertTrue(out.contains("[1]   Button")) // one child indent level
     }
 
     @Test
