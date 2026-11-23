@@ -95,8 +95,10 @@ internal object ScreenXmlParser {
         if (into.size >= maxNodes) return
         if (node is Element && node.tagName == "node") {
             val bounds = BOUNDS.find(node.getAttribute("bounds") ?: "")
+            // groupValues[0] is the full match (non-numeric), so the four capture
+            // groups are the only values that survive toIntOrNull().
             val values = bounds?.groupValues?.mapNotNull { it.toIntOrNull() }
-            val coords = if (values != null && values.size == 5) values.drop(1) else listOf(0, 0, 0, 0)
+            val coords = if (values != null && values.size == 4) values else listOf(0, 0, 0, 0)
             into += ScreenNode(
                 text = attr(node, "text"),
                 desc = attr(node, "content-desc"),
