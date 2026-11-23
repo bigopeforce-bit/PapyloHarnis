@@ -52,9 +52,13 @@ research/
 
 
 # --- Signing ---
-signing-keys/
+# A stable *debug* keystore is committed so every CI build signs with the same
+# key and updates install in place. It uses the public Android debug password
+# ("android") and is not a release key — keep real release keys ignored.
+signing-keys/*
 *.jks
 *.keystore
+!signing-keys/debug.keystore
 *.p12
 *.pfx
 *.key

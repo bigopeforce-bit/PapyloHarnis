@@ -62,8 +62,8 @@ android {
         applicationId = "com.androidharness.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 41
-        versionName = "3.7"
+        versionCode = 42
+        versionName = "3.8"
         buildConfigField("String", "GITHUB_CLIENT_ID", "\"$githubClientId\"")
         buildConfigField("boolean", "PLAY_DISTRIBUTION", (distributionChannel == "play").toString())
         if (hasNdk) {
@@ -80,15 +80,18 @@ android {
 
     signingConfigs {
         getByName("debug") {
-            // Prefer the stable debug key kept in the gitignored signing-keys/
-            // folder. AGP's default path is machine-dependent (it resolved to
+            // Always sign with the stable debug key committed in signing-keys/.
+            // AGP's default path is machine-dependent (it resolved to
             // ~/.config/.android on this box and silently generated a fresh
-            // key there), and a stray debug keystore makes every install on a
-            // device that already has the app fail with a signature mismatch.
+            // key there), which makes every install on a device that already
+            // has the app fail with a signature mismatch. Requiring the file
+            // also fails the build loudly if it ever goes missing, rather than
+            // silently falling back to a different key.
             val stableDebugKey = rootProject.file("signing-keys/debug.keystore")
-            if (stableDebugKey.exists()) {
-                storeFile = stableDebugKey
+            check(stableDebugKey.exists()) {
+                "signing-keys/debug.keystore is missing; CI builds must sign with the committed stable debug key."
             }
+            storeFile = stableDebugKey
         }
     }
 
