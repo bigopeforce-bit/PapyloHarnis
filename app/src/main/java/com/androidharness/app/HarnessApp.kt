@@ -44,6 +44,7 @@ class HarnessApp : Application() {
         // Paused LazyColumn prefetch crashes in LayoutNode.onChildRemoved when chat items change.
         ComposeFoundationFlags.isPausableCompositionInPrefetchEnabled = false
         WebView.enableSlowWholeDocumentDraw()
+        com.androidharness.app.agent.CrashLog.install(this)
         container = AppContainer(this)
         memoryScope.launch { container.settings.ensureRumbleCombo() }
         memoryScope.launch { container.settings.migrateAutomaticAgentDefaults() }
@@ -271,6 +272,7 @@ class AppContainer(val appContext: Context) {
         pullRequests = { githubRepositories },
         sessionMessages = { sessions.messages(it) },
         appSettings = settings,
+        context = appContext,
     )
     val mcp = com.androidharness.app.tools.mcp.McpManager(appContext, linuxEnv, keys, codeGraph, configuration)
     val github = com.androidharness.app.github.GitHubAuth(BuildConfig.GITHUB_CLIENT_ID,

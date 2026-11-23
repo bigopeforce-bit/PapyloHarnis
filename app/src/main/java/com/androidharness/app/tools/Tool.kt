@@ -99,6 +99,7 @@ class ToolRegistry(private val tools: List<Tool>) {
             pullRequests: (() -> com.androidharness.app.github.PullRequestPublisher?)? = null,
             sessionMessages: suspend (String) -> List<com.androidharness.app.core.ChatMessage> = { emptyList() },
             appSettings: com.androidharness.app.data.SettingsRepository? = null,
+            context: android.content.Context? = null,
         ): ToolRegistry {
             val baseTools = mutableListOf<Tool>(
                 ListDirTool(),
@@ -160,6 +161,12 @@ class ToolRegistry(private val tools: List<Tool>) {
                 baseTools += AppSettingsChangeTool(appSettings, read)
             }
             if (dhizuku != null && deviceAccess != null) baseTools += DeviceOwnerShellTool(dhizuku, deviceAccess)
+            if (context != null) {
+                baseTools += DeviceScreenTool(shellRouter, context, imageStore)
+                baseTools += DeviceScreenshotTool(shellRouter, context, imageStore)
+                baseTools += DeviceInputTool(shellRouter)
+                baseTools += CrashLogTool(context)
+            }
             if (pullRequests != null) baseTools += GitHubCreatePullRequestTool(pullRequests, sessionMessages)
             if (artifactLoader != null) {
                 baseTools.add(CreateArtifactTool(artifactLoader))
