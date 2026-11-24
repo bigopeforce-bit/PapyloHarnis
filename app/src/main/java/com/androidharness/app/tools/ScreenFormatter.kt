@@ -15,12 +15,13 @@ internal object ScreenFormatter {
         screenSize: String = "unknown",
         via: String = "",
     ): String {
+        val shown = nodes.take(maxNodes)
         val out = StringBuilder()
-        out.append("Screen $screenSize; ${nodes.size} element(s)")
+        out.append("Screen $screenSize; ${shown.size} element(s)")
         if (activePackage.isNotEmpty()) out.append("; package $activePackage")
         if (via.isNotEmpty()) out.append(" (via $via)")
         out.append('\n')
-        nodes.forEachIndexed { index, node ->
+        shown.forEachIndexed { index, node ->
             out.append('[').append(index).append("] ")
             repeat(node.depth.coerceAtMost(12)) { out.append("  ") }
             val label = node.text.ifBlank { node.desc }

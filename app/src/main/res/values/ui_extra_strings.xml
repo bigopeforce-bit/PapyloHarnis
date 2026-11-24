@@ -84,7 +84,7 @@
     <string name="ui_no_agents_md_found_in_this_workspace">"No AGENTS.md found in this workspace. Start from the template below, "</string>
     <string name="ui_or_type_init_in_chat_to_have">"or type /init in chat to have the agent analyze the workspace and write one."</string>
     <string name="ui_of_5_complete">"%1$s of 5 complete"</string>
-    <string name="ui_of_7_complete">"%1$s of 7 complete"</string>
+    <string name="ui_of_7_complete" translatable="false">"%1$s of 7 complete"</string>
     <string name="ui_requests_extra84">"%1$s · %2$s requests"</string>
     <string name="ui_price_unavailable">"Price unavailable"</string>
     <string name="ui_new_chat_in">"New chat in %1$s"</string>
