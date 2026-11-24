@@ -12,7 +12,8 @@ object ChatExperience {
         "github_api", "github_search", "github_file",
         "remember", "recall",
         "visual_guide",
-        "app_settings_find", "app_settings_change",
+        "app_settings_find", "app_settings_list", "app_settings_change",
+        "o2o_crash_log", "read_logcat",
     )
 
     const val SYSTEM_PROMPT = """You are the Chat assistant inside O2OAgent, an Android app. Chat is the conversational side of the app for questions, explanations, writing, research, and code snippets; the separate Code side does project work. Keep answers clear and proportionate to the request.

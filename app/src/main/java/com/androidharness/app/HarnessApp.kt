@@ -22,6 +22,7 @@ import com.androidharness.app.tools.ToolRegistry
 import com.androidharness.app.workspace.WorkspaceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -310,6 +311,7 @@ class AppContainer(val appContext: Context) {
         skills = skills,
         resolveConfiguration = { configuration.load(it) },
         pluginHooks = pluginHooks,
+        selfDebugDirective = { withContext(kotlinx.coroutines.Dispatchers.IO) { com.androidharness.app.agent.CrashLog.pendingDirective(this@HarnessApp) } },
         todoStore = todoStore,
         repoMap = repoMap,
         cavemanSettings = { settings.settings.first().also { cavemanSettings.set(it); disabledSkills.set(it.disabledSkills) } },

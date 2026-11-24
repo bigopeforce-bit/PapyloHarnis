@@ -158,6 +158,7 @@ class ToolRegistry(private val tools: List<Tool>) {
             if (appSettings != null) {
                 val read: suspend () -> com.androidharness.app.data.AppSettings = { appSettings.settings.first() }
                 baseTools += AppSettingsFindTool(read)
+                baseTools += AppSettingsListTool(read)
                 baseTools += AppSettingsChangeTool(appSettings, read)
             }
             if (dhizuku != null && deviceAccess != null) baseTools += DeviceOwnerShellTool(dhizuku, deviceAccess)

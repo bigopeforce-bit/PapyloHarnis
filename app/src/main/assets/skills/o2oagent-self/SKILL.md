@@ -18,9 +18,9 @@ O2OAgent can edit its own source and rebuild itself. The source is a GitHub repo
 
 ## 1. Get a checkout
 1. `env_status`. If the Linux environment is not ready, ask the user to install it with the card the app offers; do not pretend a checkout is possible without shell.
-2. In a shell-backed workspace, clone the source (public anonymous HTTPS works):
+2. In a shell-backed workspace, check whether `o2oagent-source` already exists first (`list_dir` or `git_status` inside it) and reuse it if so; never clone twice. Otherwise clone the source (public anonymous HTTPS works):
    `git clone https://github.com/bigopeforce-bit/PapyloHarnis.git o2oagent-source`
-   Then work only inside `o2oagent-source`.
+   Then work only inside `o2oagent-source`. Save its path in workspace memory (or a short note) so later runs find the same checkout.
 3. If the workspace cannot run shell at all, use `github_file` / `github_api` to read files and `write_file` for edits, but say plainly that rebuilding still needs a shell-backed workspace.
 
 ## 2. Edit carefully
@@ -42,7 +42,7 @@ Local Gradle on this phone can run out of memory. GitHub Actions is the reliable
 1. `aapt dump badging <apk>`: check package `com.androidharness.app.debug`, the new versionCode/versionName, and label `O2OAgent`.
 2. `apksigner verify --print-certs <apk> | grep SHA-256` must match `keytool -list -v -keystore signing-keys/debug.keystore -storepass android | grep SHA256`. A different key means the install will need an uninstall; stop and tell the user.
 3. Install only after confirmation. With Shizuku/root use `pm install -r <apk>` and check for `Success`. Otherwise copy the APK into Downloads and ask the user to tap Install; never claim it is installed until they confirm.
-4. Launch it and check that the change works. If it crashes, use the android-crash skill.
+4. Launch it and check that the change works. If it crashes or a tool fails, load the o2oagent-self-debug skill immediately and fix that too. For a change to the app's own configuration rather than its source, use app_settings_list / app_settings_find and app_settings_change instead of editing DataStore keys by hand; verify the result with app_settings_list.
 
 ## Pitfalls
 - Never trigger CI twice for the same commit "just in case" — check the run status first.

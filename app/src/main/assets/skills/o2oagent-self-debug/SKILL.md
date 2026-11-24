@@ -13,6 +13,9 @@ When O2OAgent crashes, a tool fails, a build breaks or the app behaves wrongly, 
 - A CI build or unit test for O2OAgent fails
 - The user says "fix yourself", "you have a bug", "why did that fail"
 
+## Automatic trigger
+O2OAgent injects a self-debug directive when an unhandled crash report is waiting, and appends `[O2OAgent self-debug]` to a failed result from its own tools (`o2o_crash_log`, `read_logcat`, `device_screen`, `device_screenshot`, `device_input`, `app_settings_find`, `app_settings_list`, `app_settings_change`). Treat either one as a directive to load this skill in the current turn, before replying to the user. Reading `o2o_crash_log` marks the waiting reports as seen, so the directive appears only once per crash.
+
 ## When not to use
 - A bug in the user's own project — use systematic-debugging instead
 - A web page or browser error — use browser_get_logs / browser_screenshot
@@ -20,8 +23,9 @@ When O2OAgent crashes, a tool fails, a build breaks or the app behaves wrongly, 
 ## 1. Collect evidence
 1. `o2o_crash_log` first — it returns O2OAgent's persisted crash reports with full stack traces, even after a restart. Then `read_logcat` with `package_name=com.androidharness.app.debug`, `buffer=crash`, `level=E`, `lines=300`. If that is empty, try `buffer=all` and `tag=AndroidRuntime`. Read the stack trace: find the first `Caused by`, the file/class and line number.
 2. `device_screen` to see what is actually on the phone right now — an error dialog, a stuck screen, or the wrong UI. If the layout or an image matters, call `device_screenshot` and look at the attached image.
-3. If a tool failed, read its exact error text. Check the backend first: device_screen and device_input prefer O2OAgent's own AccessibilityService (Setup -> Accessibility, or Device Owner can enable it through secure settings) and fall back to a privileged shell (Shizuku, Wireless ADB, root or Device Owner) for gestures and key events; device_screenshot always needs a privileged shell. Report that plainly instead of calling it a bug.
-4. To inspect another app, call `device_input` with `action=open_app` and its package first, then `device_screen` again — the screen tools read whatever is currently in the foreground.
+3. If a setting looks wrong, call `app_settings_list` to see every current value before changing anything; follow with `app_settings_change` and verify with `app_settings_list` again. Protected keys and user-only values stay with the user.
+4. If a tool failed, read its exact error text. Check the backend first: device_screen and device_input prefer O2OAgent's own AccessibilityService (Setup -> Accessibility, or Device Owner can enable it through secure settings) and fall back to a privileged shell (Shizuku, Wireless ADB, root or Device Owner) for gestures and key events; device_screenshot always needs a privileged shell. Report that plainly instead of calling it a bug.
+5. To inspect another app, call `device_input` with `action=open_app` and its package first, then `device_screen` again — the screen tools read whatever is currently in the foreground.
 
 ## 2. Locate the code
 - Map the stack trace frame to a source file under `app/src/main/java/...`.

@@ -20,6 +20,9 @@ class CrashLogTool(private val context: Context) : Tool {
 
     override suspend fun execute(args: JsonObject, ctx: ToolContext): ToolResult {
         val limit = (args["limit"]?.jsonPrimitive?.intOrNull ?: 2).coerceIn(1, 5)
-        return ToolResult(true, CrashLog.latest(context, limit))
+        val text = CrashLog.latest(context, limit)
+        // The agent has now seen the reports; stop injecting the crash directive next run.
+        CrashLog.markHandled(context)
+        return ToolResult(true, text)
     }
 }
