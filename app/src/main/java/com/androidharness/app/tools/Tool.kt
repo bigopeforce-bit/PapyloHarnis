@@ -165,7 +165,7 @@ class ToolRegistry(private val tools: List<Tool>) {
             if (context != null) {
                 baseTools += DeviceScreenTool(shellRouter, context, imageStore)
                 baseTools += DeviceScreenshotTool(shellRouter, context, imageStore)
-                baseTools += DeviceInputTool(shellRouter)
+                baseTools += DeviceInputTool(shellRouter, context)
                 baseTools += CrashLogTool(context)
             }
             if (pullRequests != null) baseTools += GitHubCreatePullRequestTool(pullRequests, sessionMessages)

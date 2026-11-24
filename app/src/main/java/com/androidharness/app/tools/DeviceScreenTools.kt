@@ -1,11 +1,14 @@
 package com.androidharness.app.tools
 
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import com.androidharness.app.core.ImageRef
 import com.androidharness.app.data.ImageStore
 import com.androidharness.app.data.env.ShellTierRouter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -41,12 +44,8 @@ class DeviceShell(private val router: ShellTierRouter) {
         withContext(Dispatchers.IO) {
             val result = router.run(command, File("/"), timeoutMs, maxOutput)
             val body = result.rawOutput.ifBlank { result.rawStderr }
-            if (result.exitCode != 0 && body.isBlank()) {
-                throw ToolFailure(
-                    "Device command failed (exit ${result.exitCode}). " +
-                        "A privileged shell is required: start Shizuku, connect Wireless ADB, or grant root/Device Owner in Settings → Terminal. " +
-                        (result.note ?: "")
-                )
+            DeviceCommandOutcome.failure(result.exitCode, result.timedOut, body, timeoutMs)?.let { failure ->
+                throw ToolFailure(failure + (result.note ?: ""))
             }
             DeviceCommandResult(buildString {
                 if (result.note != null) append(result.note).append('\n')
@@ -143,9 +142,25 @@ class DeviceScreenshotTool(
     }
 }
 
+/** Best-effort foreground package candidates, used to verify an app launch. */
+object ForegroundProbe {
+    fun candidates(context: Context?, service: O2oAccessibilityService?): List<String> {
+        val found = mutableListOf<String>()
+        runCatching { service?.rootInActiveWindow?.packageName?.toString() }
+            .getOrNull()?.takeIf { it.isNotBlank() }?.let(found::add)
+        val manager = context?.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        runCatching { manager?.runningAppProcesses }.getOrNull()
+            ?.filter { it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
+            ?.mapNotNull { it.processName?.takeIf { name -> name.isNotBlank() } }
+            ?.let(found::addAll)
+        return found.distinct()
+    }
+}
+
 /** Taps, swipes, types, presses keys and opens apps on the real phone. */
 class DeviceInputTool(
     private val router: ShellTierRouter,
+    private val context: Context? = null,
     private val shell: DeviceShell = DeviceShell(router),
     private val accessibility: () -> O2oAccessibilityService? = { O2oAccessibilityService.instance },
 ) : Tool {
@@ -176,6 +191,9 @@ class DeviceInputTool(
     override suspend fun execute(args: JsonObject, ctx: ToolContext): ToolResult {
         val action = args["action"]?.jsonPrimitive?.content?.trim()?.lowercase()
             ?: throw ToolFailure("Missing required argument: action")
+        // App launches use Android's own APIs and verify the foreground before
+        // reporting success; a shell command alone cannot prove an app opened.
+        if (action == "open_app") return openApp(args)
         val command = when (action) {
             "tap" -> "/system/bin/input tap ${intArg(args, "x")} ${intArg(args, "y")}"
             "long_press" -> {
@@ -209,11 +227,6 @@ class DeviceInputTool(
                 "notifications" -> "/system/bin/input keyevent 83"
                 else -> throw ToolFailure("Unsupported press target.")
             }
-            "open_app" -> {
-                val pkg = args["package"]?.jsonPrimitive?.content?.trim().orEmpty()
-                if (!PKG_REGEX.matches(pkg)) throw ToolFailure("package must be a valid Android package name.")
-                "/system/bin/monkey -p ${shellQuote(pkg)} -c android.intent.category.LAUNCHER 1"
-            }
             else -> throw ToolFailure("Unsupported action '$action'. Use tap, long_press, swipe, text, key, press or open_app.")
         }
         val service = accessibility()
@@ -232,7 +245,6 @@ class DeviceInputTool(
                 )
                 "text" -> service.setText(args["text"]?.jsonPrimitive?.content.orEmpty())
                 "key", "press" -> service.globalKey(args["key"]?.jsonPrimitive?.content?.trim()?.lowercase().orEmpty())
-                "open_app" -> service.openApp(args["package"]?.jsonPrimitive?.content?.trim().orEmpty())
                 else -> null
             }
             if (outcome != null) return ToolResult(true, outcome)
@@ -242,6 +254,54 @@ class DeviceInputTool(
             ToolResult(true, "Performed $action on the device.\n${result.output}", execution = listOf(result.receipt))
         } catch (e: ToolFailure) {
             ToolResult(false, e.message ?: "Device input failed.")
+        }
+    }
+
+    private suspend fun openApp(args: JsonObject): ToolResult {
+        val pkg = args["package"]?.jsonPrimitive?.content?.trim().orEmpty()
+        if (!PKG_REGEX.matches(pkg)) throw ToolFailure("package must be a valid Android package name.")
+        val appContext = context?.applicationContext
+        val service = accessibility()
+        val intent = if (appContext == null) null
+        else runCatching { appContext.packageManager.getLaunchIntentForPackage(pkg) }.getOrNull()
+        if (appContext != null && intent == null) return ToolResult(false, AppLaunchClaims.missing(pkg))
+
+        var via: String? = null
+        var launchError: String? = null
+        if (service?.openApp(pkg) != null) {
+            via = "accessibility service"
+        }
+        if (via == null && intent != null) {
+            val launched = runCatching {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                appContext!!.startActivity(intent)
+            }
+            if (launched.isSuccess) via = "app context" else launchError = launched.exceptionOrNull()?.message
+        }
+        if (via == null && launchError == null) {
+            // Last resort: a real privileged shell can launch via monkey. The
+            // strict DeviceShell helper now fails on non-zero exits instead of
+            // turning a permission error into a success receipt.
+            val launched = runCatching {
+                shell.run("/system/bin/monkey -p ${shellQuote(pkg)} -c android.intent.category.LAUNCHER 1",
+                    timeoutMs = 20_000, maxOutput = 8_000)
+            }
+            if (launched.isSuccess) via = "shell" else launchError = launched.exceptionOrNull()?.message
+        }
+        if (via == null) {
+            return ToolResult(false, AppLaunchClaims.launchFailed(pkg, launchError ?: "no launch backend available"))
+        }
+        var observed = ForegroundProbe.candidates(appContext, service)
+        var attempts = 0
+        while (!AppLaunchClaims.foregroundMatches(observed, pkg) && attempts < 15) {
+            delay(300)
+            observed = ForegroundProbe.candidates(appContext, accessibility())
+            attempts++
+        }
+        return if (AppLaunchClaims.foregroundMatches(observed, pkg)) {
+            ToolResult(true, AppLaunchClaims.verified(pkg, via), execution = emptyList())
+        } else {
+            ToolResult(false, AppLaunchClaims.unverified(pkg, observed))
         }
     }
 
