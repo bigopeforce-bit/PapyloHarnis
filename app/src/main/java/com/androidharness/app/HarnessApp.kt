@@ -311,7 +311,7 @@ class AppContainer(val appContext: Context) {
         skills = skills,
         resolveConfiguration = { configuration.load(it) },
         pluginHooks = pluginHooks,
-        selfDebugDirective = { withContext(kotlinx.coroutines.Dispatchers.IO) { com.androidharness.app.agent.CrashLog.pendingDirective(this@HarnessApp) } },
+        selfDebugDirective = { withContext(kotlinx.coroutines.Dispatchers.IO) { com.androidharness.app.agent.CrashLog.pendingDirective(appContext) } },
         todoStore = todoStore,
         repoMap = repoMap,
         cavemanSettings = { settings.settings.first().also { cavemanSettings.set(it); disabledSkills.set(it.disabledSkills) } },
