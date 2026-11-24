@@ -20,7 +20,7 @@ When O2OAgent crashes, a tool fails, a build breaks or the app behaves wrongly, 
 ## 1. Collect evidence
 1. `o2o_crash_log` first — it returns O2OAgent's persisted crash reports with full stack traces, even after a restart. Then `read_logcat` with `package_name=com.androidharness.app.debug`, `buffer=crash`, `level=E`, `lines=300`. If that is empty, try `buffer=all` and `tag=AndroidRuntime`. Read the stack trace: find the first `Caused by`, the file/class and line number.
 2. `device_screen` to see what is actually on the phone right now — an error dialog, a stuck screen, or the wrong UI. If the layout or an image matters, call `device_screenshot` and look at the attached image.
-3. If a tool failed, read its exact error text. Check whether it lacked a privileged shell: device screen tools need Shizuku, Wireless ADB, root or Device Owner. Report that plainly instead of calling it a bug.
+3. If a tool failed, read its exact error text. Check the backend first: device_screen and device_input prefer O2OAgent's own AccessibilityService (Setup -> Accessibility, or Device Owner can enable it through secure settings) and fall back to a privileged shell (Shizuku, Wireless ADB, root or Device Owner) for gestures and key events; device_screenshot always needs a privileged shell. Report that plainly instead of calling it a bug.
 4. To inspect another app, call `device_input` with `action=open_app` and its package first, then `device_screen` again — the screen tools read whatever is currently in the foreground.
 
 ## 2. Locate the code

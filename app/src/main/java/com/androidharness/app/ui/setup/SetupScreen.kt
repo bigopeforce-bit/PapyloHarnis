@@ -21,10 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Terminal
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -44,8 +46,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.androidharness.app.AppContainer
+import com.androidharness.app.data.env.AccessibilityEnabler
+import com.androidharness.app.data.env.DhizukuStatus
 import com.androidharness.app.data.env.EnvState
 import com.androidharness.app.data.env.ShizukuState
+import com.androidharness.app.tools.O2oAccessibilityService
 import com.androidharness.app.ui.common.HarnessMark
 import com.androidharness.app.ui.common.SystemGrants
 import com.androidharness.app.ui.common.ThinLinearProgress
@@ -79,6 +84,9 @@ fun SetupScreen(
     val shizukuState by container.shizuku.state.collectAsStateWithLifecycle()
     val serviceState by container.shizuku.serviceState.collectAsStateWithLifecycle()
     val envState by container.linuxEnv.state.collectAsStateWithLifecycle()
+    val dhizukuState by container.dhizuku.state.collectAsStateWithLifecycle()
+    val accessibilityConnected by O2oAccessibilityService.connected.collectAsStateWithLifecycle()
+    var accessibilityEnabled by remember { mutableStateOf(AccessibilityEnabler.isEnabled(context)) }
 
     val storageAccess = rememberStorageAccess()
     val storageGranted = storageAccess.granted
@@ -95,6 +103,8 @@ fun SetupScreen(
             if (event == Lifecycle.Event.ON_RESUME) {
                 notifGranted = SystemGrants.isPostNotificationsGranted(context)
                 batteryExempt = SystemGrants.isIgnoringBatteryOptimizations(context)
+                accessibilityEnabled = AccessibilityEnabler.isEnabled(context)
+                container.dhizuku.refresh()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -112,7 +122,12 @@ fun SetupScreen(
     // ---- Step completion -------------------------------------------------
     val shizukuDone = shizukuState == ShizukuState.GRANTED && serviceState.isReady
     val envDone = envState is EnvState.Ready
-    val completed = listOf(storageGranted, notifGranted, shizukuDone, envDone, batteryExempt).count { it }
+    val deviceOwnerDone = dhizukuState.status == DhizukuStatus.GRANTED
+    val accessibilityDone = accessibilityConnected
+    val completed = listOf(
+        storageGranted, notifGranted, shizukuDone, envDone, batteryExempt,
+        deviceOwnerDone, accessibilityDone,
+    ).count { it }
 
     Scaffold(containerColor = scheme.surface) { padding ->
         Column(
@@ -138,12 +153,12 @@ fun SetupScreen(
 
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        uiContext.getString(R.string.ui_of_5_complete, (completed).toString()),
+                        uiContext.getString(R.string.ui_of_7_complete, (completed).toString()),
                         style = MaterialTheme.typography.labelMediumEmphasized,
                         color = scheme.onSurfaceVariant,
                     )
                     ThinLinearProgress(
-                        progress = { completed / 5f },
+                        progress = { completed / 7f },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -206,7 +221,61 @@ fun SetupScreen(
                     }
                 }
 
-                // -- 4. Linux environment (optional) -----------------------
+                // -- 4. Device Owner (optional) ----------------------------
+                SetupStep(
+                    icon = { Icon(Icons.Outlined.AdminPanelSettings, null, Modifier.size(16.dp), scheme.onSurfaceVariant) },
+                    title = "Device Owner",
+                    status = when (dhizukuState.status) {
+                        DhizukuStatus.NOT_INSTALLED -> "Optional: install Dhizuku to grant Device Owner shell access"
+                        DhizukuStatus.NOT_RUNNING -> "Open Dhizuku and activate it as device owner"
+                        DhizukuStatus.NEEDS_PERMISSION -> "Grant access so O2OAgent can use the owner shell"
+                        DhizukuStatus.REQUESTING -> "Waiting for the permission dialog"
+                        DhizukuStatus.GRANTED -> "Connected as device owner - can enable accessibility for you"
+                        DhizukuStatus.DENIED -> "Permission denied - grant it in Dhizuku, then refresh"
+                        DhizukuStatus.ERROR -> "Device Owner connection error - refresh to retry"
+                    },
+                    complete = deviceOwnerDone,
+                    optional = true,
+                ) {
+                    when (dhizukuState.status) {
+                        DhizukuStatus.NEEDS_PERMISSION, DhizukuStatus.DENIED ->
+                            Button(onClick = { container.dhizuku.requestPermission() }) { Text(uiContext.getString(R.string.settings_action_grant)) }
+                        else -> OutlinedButton(onClick = { container.dhizuku.refresh() }) { Text(uiContext.getString(R.string.ui_refresh)) }
+                    }
+                }
+
+                // -- 5. Accessibility (optional) ---------------------------
+                SetupStep(
+                    icon = { Icon(Icons.Outlined.TouchApp, null, Modifier.size(16.dp), scheme.onSurfaceVariant) },
+                    title = "Accessibility",
+                    status = when {
+                        accessibilityConnected -> "On - O2OAgent reads and taps the screen without a privileged shell"
+                        accessibilityEnabled -> "Enabled but not connected yet - reopen O2OAgent if it stays off"
+                        deviceOwnerDone -> "Optional: enable with one tap through Device Owner"
+                        else -> "Optional: lets O2OAgent read the screen and tap buttons for you"
+                    },
+                    complete = accessibilityDone,
+                    optional = true,
+                ) {
+                    if (!accessibilityDone) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (deviceOwnerDone) {
+                                Button(onClick = {
+                                    scope.launch {
+                                        AccessibilityEnabler.enableViaDeviceOwner(container.dhizuku, context)
+                                        accessibilityEnabled = AccessibilityEnabler.isEnabled(context)
+                                    }
+                                }) { Text("Enable") }
+                            }
+                            OutlinedButton(onClick = {
+                                AccessibilityEnabler.openSettings(context)
+                                accessibilityEnabled = AccessibilityEnabler.isEnabled(context)
+                            }) { Text("Open settings") }
+                        }
+                    }
+                }
+
+                // -- 6. Linux environment (optional) -----------------------
                 SetupStep(
                     icon = { Icon(Icons.Outlined.Terminal, null, Modifier.size(16.dp), scheme.onSurfaceVariant) },
                     title = uiContext.getString(R.string.settings_search_linux_title),
@@ -230,7 +299,7 @@ fun SetupScreen(
                     }
                 }
 
-                // -- 5. Battery optimization (optional) --------------------
+                // -- 7. Battery optimization (optional) --------------------
                 SetupStep(
                     icon = {
                         Icon(Icons.Outlined.BatteryChargingFull, null, Modifier.size(16.dp), scheme.onSurfaceVariant)

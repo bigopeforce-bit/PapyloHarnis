@@ -2,6 +2,7 @@
 <resources>
     <!-- The product name is a brand, not UI copy, so it is never translated. -->
     <string name="app_name" translatable="false">O2OAgent</string>
+    <string name="o2o_accessibility_description">Lets O2OAgent read the on-screen UI and tap, swipe or type for you. No ADB, root or Shizuku needed.</string>
 
     <!-- ================================================================
          Settings · page titles, descriptions and groups.

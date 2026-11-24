@@ -61,14 +61,15 @@ class DeviceScreenTool(
     private val context: Context,
     private val imageStore: ImageStore? = null,
     private val shell: DeviceShell = DeviceShell(router),
+    private val accessibility: () -> O2oAccessibilityService? = { O2oAccessibilityService.instance },
 ) : Tool {
     override val name = "device_screen"
     override val description =
         "Read the phone's current screen as a numbered UI hierarchy (text, content descriptions, element ids, " +
-            "bounds and click/scroll flags), like reading an accessibility tree. Requires a privileged shell " +
-            "(Shizuku, Wireless ADB, root or Device Owner). Open the target app first with device_input " +
-            "open_app, because this reads whatever is currently on screen. Set include_screenshot=true " +
-            "to attach an image as well when the text alone is not enough."
+            "bounds and click/scroll flags). Prefers O2OAgent's own AccessibilityService (no shell needed); " +
+            "falls back to uiautomator through a privileged shell (Shizuku, Wireless ADB, root or Device Owner). " +
+            "Open the target app first with device_input open_app, because this reads whatever is currently on " +
+            "screen. Set include_screenshot=true to attach an image as well when the text alone is not enough."
     override val parametersSchema = Schema.obj(
         mapOf(
             "include_screenshot" to Schema.boolean("Also capture and attach a screenshot image. Default false."),
@@ -80,6 +81,18 @@ class DeviceScreenTool(
 
     override suspend fun execute(args: JsonObject, ctx: ToolContext): ToolResult {
         val maxNodes = (args["max_nodes"]?.jsonPrimitive?.intOrNull ?: 300).coerceIn(1, 800)
+        val service = accessibility()
+        if (service != null) {
+            val listing = service.readScreen(maxNodes)
+            val store = imageStore
+            return if (args["include_screenshot"]?.jsonPrimitive?.booleanOrNull == true && store != null) {
+                val shot = runCatching { captureScreenshot(context, store, shell) }.getOrNull()
+                val note = if (shot == null) "\n[screenshot unavailable: image capture still needs a privileged shell]" else ""
+                ToolResult(true, listing + note, image = shot)
+            } else {
+                ToolResult(true, listing)
+            }
+        }
         // Shell-owned scratch: the shell uid writes the dump and cats it back as
         // text. No TTY and no app-readable file path are needed.
         val dump = "/data/local/tmp/.o2o-window-${UUID.randomUUID()}.xml"
@@ -109,8 +122,9 @@ class DeviceScreenshotTool(
     override val name = "device_screenshot"
     override val description =
         "Take a screenshot of the phone screen and attach it as an image to the chat, for visual understanding " +
-            "of layouts, icons, maps, images, or anything the UI text does not describe. Requires a privileged " +
-            "shell (Shizuku, Wireless ADB, root or Device Owner). Secure screens may block capture."
+            "of layouts, icons, maps, images, or anything the UI text does not describe. Image capture needs a " +
+            "privileged shell (Shizuku, Wireless ADB, root or Device Owner); the AccessibilityService only reads " +
+            "the UI tree, not pixels. Secure screens may block capture."
     override val parametersSchema = Schema.obj(emptyMap())
     override val isReadOnly = true
     override fun isAvailable(ctx: ToolContext) = ctx.workspace !is com.androidharness.app.workspace.SshFs
@@ -133,13 +147,15 @@ class DeviceScreenshotTool(
 class DeviceInputTool(
     private val router: ShellTierRouter,
     private val shell: DeviceShell = DeviceShell(router),
+    private val accessibility: () -> O2oAccessibilityService? = { O2oAccessibilityService.instance },
 ) : Tool {
     override val name = "device_input"
     override val description =
         "Act on the phone screen: tap, long-press, swipe, type text, press a system key, or open an app. " +
             "Use device_screen first to find coordinates. Coordinates are physical screen pixels from the " +
-            "@x,y shown by device_screen. Requires a privileged shell (Shizuku, Wireless ADB, root or Device Owner). " +
-            "This controls the real device and follows the app's permission mode and approvals."
+            "@x,y shown by device_screen. Prefers O2OAgent's own AccessibilityService; falls back to a privileged " +
+            "shell (Shizuku, Wireless ADB, root or Device Owner) for gestures and key events accessibility cannot " +
+            "perform. This controls the real device and follows the app's permission mode and approvals."
     override val parametersSchema = Schema.obj(
         mapOf(
             "action" to Schema.string("Required: tap, long_press, swipe, text, key, press, or open_app."),
@@ -199,6 +215,27 @@ class DeviceInputTool(
                 "/system/bin/monkey -p ${shellQuote(pkg)} -c android.intent.category.LAUNCHER 1"
             }
             else -> throw ToolFailure("Unsupported action '$action'. Use tap, long_press, swipe, text, key, press or open_app.")
+        }
+        val service = accessibility()
+        if (service != null) {
+            // Only fall through to the shell when accessibility did not dispatch
+            // anything; never repeat an action it may already have performed.
+            val outcome = when (action) {
+                "tap" -> service.tap(intArg(args, "x"), intArg(args, "y"))
+                "long_press" -> {
+                    val x = intArg(args, "x"); val y = intArg(args, "y")
+                    service.longPress(x, y)
+                }
+                "swipe" -> service.swipe(
+                    intArg(args, "x"), intArg(args, "y"), intArg(args, "x2"), intArg(args, "y2"),
+                    args["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300,
+                )
+                "text" -> service.setText(args["text"]?.jsonPrimitive?.content.orEmpty())
+                "key", "press" -> service.globalKey(args["key"]?.jsonPrimitive?.content?.trim()?.lowercase().orEmpty())
+                "open_app" -> service.openApp(args["package"]?.jsonPrimitive?.content?.trim().orEmpty())
+                else -> null
+            }
+            if (outcome != null) return ToolResult(true, outcome)
         }
         return try {
             val result = shell.run(command, timeoutMs = 20_000, maxOutput = 8_000)
